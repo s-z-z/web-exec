@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Configurations</title>
+    <style>
+        :root {
+            --color-bg: #0f172a;
+            --color-surface: #1e293b;
+            --color-surface-hover: #334155;
+            --color-border: #475569;
+            --color-text: #f1f5f9;
+            --color-text-secondary: #94a3b8;
+            --color-primary: #38bdf8;
+            --color-primary-hover: #7dd3fc;
+            --color-success: #4ade80;
+            --color-error: #f87171;
+            --color-warning: #fbbf24;
+            --font-body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-mono: 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-body);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), #0ea5e9);
+            color: #0f172a;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,189,248,0.3); }
+        .btn-danger {
+            background: transparent;
+            border: 1px solid var(--color-error);
+            color: var(--color-error);
+        }
+        .btn-danger:hover { background: rgba(248,113,113,0.1); }
+        .btn-secondary {
+            background: var(--color-surface-hover);
+            color: var(--color-text);
+        }
+        .btn-secondary:hover { background: var(--color-border); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .table-container {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px; text-align: left; }
+        th {
+            background: rgba(255,255,255,0.03);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+            border-bottom: 1px solid var(--color-border);
+        }
+        td { border-bottom: 1px solid rgba(71,85,105,0.3); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .path-cell { font-family: var(--font-mono); font-size: 13px; }
+        .path-cell span {
+            display: inline-block;
+            background: rgba(56,189,248,0.1);
+            color: var(--color-primary);
+            padding: 2px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(56,189,248,0.2);
+        }
+        .script-preview {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+        .actions { display: flex; gap: 8px; }
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--color-text-secondary);
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 24px;
+            opacity: 0.5;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            max-width: 860px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn 0.2s ease-out;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            padding: 24px 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 { font-size: 20px; font-weight: 600; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+        .modal-close:hover { color: var(--color-text); }
+        .modal-body { padding: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text);
+            font-size: 14px;
+            font-family: var(--font-body);
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        .form-group textarea {
+            resize: none;
+            min-height: 320px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .code-editor-wrapper {
+            display: flex;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .code-editor-wrapper:focus-within {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(56,189,248,0.15);
+        }
+        .line-numbers {
+            background: rgba(30, 41, 59, 0.8);
+            border-right: 2px solid rgba(71, 85, 105, 0.5);
+            padding: 12px 12px 12px 8px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--color-text-secondary);
+            text-align: right;
+            user-select: none;
+            overflow: hidden;
+            min-width: 48px;
+            flex-shrink: 0;
+        }
+        .code-editor-wrapper textarea {
+            border: none;
+            border-radius: 0;
+            min-height: 320px;
+            resize: none;
+            flex: 1;
+            padding: 12px 14px;
+            background: transparent;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .code-editor-wrapper textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        .code-editor-wrapper textarea::-webkit-scrollbar-track {
+            background: var(--color-bg);
+        }
+        .code-editor-wrapper textarea::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+        .code-editor-wrapper textarea::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-secondary);
+        }
+        .code-editor-wrapper textarea:focus {
+            outline: none;
+            border-color: transparent;
+        }
+        .code-editor-wrapper textarea:focus {
+            outline: none;
+            border-color: transparent;
+        }
+        .modal-footer {
+            padding: 0 24px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 2000;
+            max-width: 400px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { background: #14532d; color: var(--color-success); border: 1px solid #22c55e; }
+        .toast-error { background: #450a0a; color: var(--color-error); border: 1px solid #ef4444; }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .confirm-modal .modal-body { text-align: center; padding: 32px 24px; }
+        .confirm-modal .modal-body p { margin-bottom: 8px; }
+        .confirm-modal .modal-body .confirm-path {
+            font-family: var(--font-mono);
+            color: var(--color-primary);
+            background: rgba(56,189,248,0.1);
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .btn-test {
+            background: transparent;
+            border: 1px solid var(--color-success);
+            color: var(--color-success);
+        }
+        .btn-test:hover { background: rgba(74,222,128,0.1); }
+        .btn-test:disabled { opacity: 0.5; cursor: not-allowed; }
+        .result-output {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-y: auto;
+            max-height: 300px;
+            margin-top: 8px;
+        }
+        .result-output.stdout { color: var(--color-text); }
+        .result-output.stderr { color: var(--color-error); }
+        .result-meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+        .result-meta span { display: flex; align-items: center; gap: 4px; }
+        .result-meta .badge-success { color: var(--color-success); background: rgba(74,222,128,0.15); padding: 2px 8px; border-radius: var(--radius-sm); }
+        .result-meta .badge-error { color: var(--color-error); background: rgba(248,113,113,0.15); padding: 2px 8px; border-radius: var(--radius-sm); }
+        .result-meta .badge-timeout { color: var(--color-warning); background: rgba(251,191,36,0.15); padding: 2px 8px; border-radius: var(--radius-sm); }
+        .badge-remote { color: var(--color-primary); background: rgba(56,189,248,0.15); padding: 2px 8px; border-radius: var(--radius-sm); display: inline-block; font-size: 12px; font-weight: 500; }
+        .history-row { cursor: pointer; }
+        .history-detail { display: none; }
+        .history-detail.active { display: table-row; }
+        .history-detail td { padding: 16px; background: var(--color-bg); border-top: 1px solid var(--color-border); }
+        .filter-row { margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .filter-row label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
+        .filter-row select {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-family: var(--font-body);
+            cursor: pointer;
+        }
+        .filter-row select:focus { outline: none; border-color: var(--color-primary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Route Configurations</h1>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" onclick="openHistoryModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    History
+                </button>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    Add Route
+                </button>
+                <button id="logoutBtn" class="btn btn-secondary" onclick="logout()" style="display: none;">
+                    Logout
+                </button>
+            </div>
+        </div>
+        <div id="routeTable" class="table-container"></div>
+    </div>
+
+    <div id="routeModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Route</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="routeForm" onsubmit="return false;">
+                    <input type="hidden" id="routeId">
+                    <div class="form-group">
+                        <label for="path">Path</label>
+                        <input type="text" id="path" placeholder="/deploy" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="workDir">Working Directory</label>
+                        <input type="text" id="workDir" placeholder="/path/to/project" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="script">Script</label>
+                        <div class="code-editor-wrapper">
+                            <div class="line-numbers" id="lineNumbers">1</div>
+                            <textarea id="script" placeholder="#!/bin/bash&#10;echo 'Hello World'" required></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveRoute()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay confirm-modal">
+        <div class="modal">
+            <div class="modal-body">
+                <h3 style="margin-bottom: 12px; font-size: 18px;">Delete Route?</h3>
+                <p>Are you sure you want to delete this route?</p>
+                <span id="confirmPath" class="confirm-path"></span>
+            </div>
+            <div class="modal-footer" style="justify-content: center; padding-bottom: 24px;">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal-overlay">
+        <div class="modal" style="max-width: 720px;">
+            <div class="modal-header">
+                <h2 id="resultTitle">Test Result</h2>
+                <button class="modal-close" onclick="closeResultModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="resultRunning" style="text-align: center; padding: 32px;">
+                    <div class="spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
+                    <p style="margin-top: 16px; color: var(--color-text-secondary);">Running script...</p>
+                </div>
+                <div id="resultContent" style="display: none;">
+                    <div class="result-meta">
+                        <span id="resultStatus"></span>
+                        <span>Exit Code: <strong id="resultExitCode"></strong></span>
+                        <span>Duration: <strong id="resultDuration"></strong></span>
+                    </div>
+                    <label style="display: block; margin-top: 16px; font-size: 13px; font-weight: 500; color: var(--color-text-secondary);">Stdout</label>
+                    <div id="resultStdout" class="result-output stdout"></div>
+                    <label id="stderrLabel" style="display: none; margin-top: 16px; font-size: 13px; font-weight: 500; color: var(--color-error);">Stderr</label>
+                    <div id="resultStderr" class="result-output stderr" style="display: none;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeResultModal()">Close</button>
+                <button class="btn btn-test" id="retestBtn" onclick="retestRoute()">Re-test</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal-overlay">
+        <div class="modal" style="max-width: 960px;">
+            <div class="modal-header">
+                <h2>Execution History</h2>
+                <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="filter-row">
+                    <label for="historyRouteFilter">Filter by Route</label>
+                    <select id="historyRouteFilter" onchange="filterHistory()">
+                        <option value="all">All Routes</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Route Path</th>
+                                <th>Trigger</th>
+                                <th>Status</th>
+                                <th>Exit Code</th>
+                                <th>Duration</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeHistoryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_BASE = window.location.pathname.replace(/\/$/, '') + '/routes';
+        let routes = [];
+        let deleteId = null;
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('web-exec-token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = 'Bearer ' + token;
+            return headers;
+        }
+
+        function promptForToken() {
+            const token = prompt('This server requires a Bearer Token for authentication.\nPlease enter your token:');
+            if (token === null || token.trim() === '') return null;
+            localStorage.setItem('web-exec-token', token.trim());
+            return token.trim();
+        }
+
+        function logout() {
+            localStorage.removeItem('web-exec-token');
+            location.reload();
+        }
+
+        async function fetchWithAuth(url, options) {
+            let res = await fetch(url, options);
+            if (res.status === 401) {
+                const token = promptForToken();
+                if (!token) {
+                    document.getElementById('routeTable').innerHTML = '<div class="empty-state"><h3 style="font-size:18px;color:var(--color-error);">Authentication Required</h3><p>Token is required to access this server. Refresh the page to try again.</p></div>';
+                    throw new Error('cancelled');
+                }
+                const headers = options?.headers || { 'Content-Type': 'application/json' };
+                headers['Authorization'] = 'Bearer ' + token;
+                if (options) options.headers = headers;
+                else options = { headers };
+                res = await fetch(url, options);
+            }
+            return res;
+        }
+
+        async function loadRoutes() {
+            try {
+                const res = await fetchWithAuth(API_BASE, { headers: getAuthHeaders() });
+                if (res.status === 401) return;
+                if (!res.ok) throw new Error('Failed to load routes');
+                routes = await res.json();
+                renderTable();
+            } catch (err) {
+                if (err.message !== 'cancelled') showToast(err.message, 'error');
+            }
+        }
+
+        function renderTable() {
+            const container = document.getElementById('routeTable');
+            if (routes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                        <h3 style="font-size: 18px; margin-bottom: 8px; color: var(--color-text);">No Routes Configured</h3>
+                        <p>Add your first route to get started.</p>
+                    </div>`;
+                return;
+            }
+            const rows = routes.map(r => `
+                <tr>
+                    <td class="path-cell"><span>${escapeHtml(r.path)}</span></td>
+                    <td>${escapeHtml(r.workDir)}</td>
+                    <td class="script-preview" title="${escapeHtml(r.script)}">${escapeHtml(r.script)}</td>
+                    <td class="actions">
+                        <button class="btn btn-test btn-sm" id="testBtn-${r.id}" onclick="testRoute('${r.id}')">Test</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openEditModal('${r.id}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${r.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+            container.innerHTML = `<table><thead><tr><th>Path</th><th>Working Directory</th><th>Script</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Route';
+            document.getElementById('routeForm').reset();
+            document.getElementById('routeId').value = '';
+            updateLineNumbers();
+            document.getElementById('routeModal').classList.add('active');
+        }
+
+        function openEditModal(id) {
+            const r = routes.find(x => x.id === id);
+            if (!r) return;
+            document.getElementById('modalTitle').textContent = 'Edit Route';
+            document.getElementById('routeId').value = r.id;
+            document.getElementById('path').value = r.path;
+            document.getElementById('workDir').value = r.workDir;
+            document.getElementById('script').value = r.script;
+            updateLineNumbers();
+            document.getElementById('routeModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('routeModal').classList.remove('active');
+        }
+
+        function openDeleteModal(id) {
+            deleteId = id;
+            const r = routes.find(x => x.id === id);
+            document.getElementById('confirmPath').textContent = r ? r.path : '';
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            deleteId = null;
+            document.getElementById('confirmModal').classList.remove('active');
+        }
+
+        async function saveRoute() {
+            const id = document.getElementById('routeId').value;
+            const path = document.getElementById('path').value.trim();
+            const workDir = document.getElementById('workDir').value.trim();
+            const script = document.getElementById('script').value.trim();
+
+            if (!path || !workDir || !script) {
+                showToast('All fields are required', 'error');
+                return;
+            }
+            if (!path.startsWith('/')) {
+                showToast('Path must start with "/"', 'error');
+                return;
+            }
+
+            const body = { path, workDir, script };
+            try {
+                let res;
+                if (id) {
+                    res = await fetchWithAuth(`${API_BASE}/${id}`, {
+                        method: 'PUT',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(body)
+                    });
+                } else {
+                    res = await fetchWithAuth(API_BASE, {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(body)
+                    });
+                }
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to save route');
+                }
+                closeModal();
+                await loadRoutes();
+                showToast(id ? 'Route updated' : 'Route created', 'success');
+            } catch (err) {
+                if (err.message !== 'cancelled') showToast(err.message, 'error');
+            }
+        }
+
+        async function confirmDelete() {
+            if (!deleteId) return;
+            try {
+                const res = await fetchWithAuth(`${API_BASE}/${deleteId}`, { method: 'DELETE', headers: getAuthHeaders() });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to delete route');
+                }
+                closeConfirmModal();
+                await loadRoutes();
+                showToast('Route deleted', 'success');
+            } catch (err) {
+                if (err.message !== 'cancelled') showToast(err.message, 'error');
+            }
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeConfirmModal();
+                closeHistoryModal();
+            }
+        });
+
+        let lastTestId = null;
+
+        async function testRoute(id) {
+            const btn = document.getElementById(`testBtn-${id}`);
+            if (btn) btn.disabled = true;
+            const r = routes.find(x => x.id === id);
+            lastTestId = id;
+
+            // Show result modal in loading state
+            document.getElementById('resultTitle').textContent = `Test: ${r.path}`;
+            document.getElementById('resultRunning').style.display = '';
+            document.getElementById('resultContent').style.display = 'none';
+            document.getElementById('resultModal').classList.add('active');
+
+            try {
+                const res = await fetchWithAuth(`/exec${r.path}`, { method: 'POST', headers: { ...getAuthHeaders(), 'X-Trigger': 'test' } });
+                const data = await res.json();
+
+                // Show result
+                document.getElementById('resultRunning').style.display = 'none';
+                document.getElementById('resultContent').style.display = '';
+
+                // Status badge
+                const statusEl = document.getElementById('resultStatus');
+                if (data.exitCode === 0) {
+                    statusEl.innerHTML = '<span class="badge-success">Success</span>';
+                } else if (data.exitCode === -1) {
+                    statusEl.innerHTML = '<span class="badge-timeout">Timeout</span>';
+                } else {
+                    statusEl.innerHTML = '<span class="badge-error">Failed</span>';
+                }
+
+                document.getElementById('resultExitCode').textContent = data.exitCode;
+                document.getElementById('resultDuration').textContent = data.durationMs + 'ms';
+                document.getElementById('resultStdout').textContent = data.stdout || '(empty)';
+
+                if (data.stderr) {
+                    document.getElementById('stderrLabel').style.display = '';
+                    document.getElementById('resultStderr').style.display = '';
+                    document.getElementById('resultStderr').textContent = data.stderr;
+                } else {
+                    document.getElementById('stderrLabel').style.display = 'none';
+                    document.getElementById('resultStderr').style.display = 'none';
+                }
+
+                if (data.error) {
+                    document.getElementById('stderrLabel').style.display = '';
+                    document.getElementById('resultStderr').style.display = '';
+                    document.getElementById('resultStderr').textContent = data.error;
+                }
+            } catch (err) {
+                document.getElementById('resultRunning').style.display = 'none';
+                document.getElementById('resultContent').style.display = '';
+                document.getElementById('resultStatus').innerHTML = '<span class="badge-error">Error</span>';
+                document.getElementById('resultExitCode').textContent = '-';
+                document.getElementById('resultDuration').textContent = '-';
+                document.getElementById('resultStdout').textContent = err.message;
+                document.getElementById('stderrLabel').style.display = 'none';
+                document.getElementById('resultStderr').style.display = 'none';
+            }
+            if (btn) btn.disabled = false;
+        }
+
+        async function openHistoryModal() {
+            const select = document.getElementById('historyRouteFilter');
+            select.innerHTML = '<option value="all">All Routes</option>';
+            routes.forEach(r => {
+                const option = document.createElement('option');
+                option.value = r.id;
+                option.textContent = r.path;
+                select.appendChild(option);
+            });
+            await filterHistory();
+            document.getElementById('historyModal').classList.add('active');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        function formatRelativeTime(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            if (diffSec < 60) return 'just now';
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return diffMin + ' minutes ago';
+            const diffHour = Math.floor(diffMin / 60);
+            if (diffHour < 24) return diffHour + ' hours ago';
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            return `${y}-${m}-${d} ${h}:${min}`;
+        }
+
+        function renderHistoryTable(records) {
+            const tbody = document.getElementById('historyTableBody');
+            if (!records || records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--color-text-secondary);padding:32px;">No execution records</td></tr>';
+                return;
+            }
+            tbody.innerHTML = records.map(rec => {
+                const triggerBadge = rec.trigger === 'test' 
+                    ? '<span class="badge-success" style="padding:2px 8px;border-radius:var(--radius-sm);font-size:12px;">Test</span>'
+                    : '<span class="badge-remote">Remote</span>';
+                let statusBadge;
+                if (rec.exitCode === 0) {
+                    statusBadge = '<span class="badge-success" style="padding:2px 8px;border-radius:var(--radius-sm);font-size:12px;">Success</span>';
+                } else if (rec.exitCode === -1) {
+                    statusBadge = '<span class="badge-timeout" style="padding:2px 8px;border-radius:var(--radius-sm);font-size:12px;">Timeout</span>';
+                } else {
+                    statusBadge = '<span class="badge-error" style="padding:2px 8px;border-radius:var(--radius-sm);font-size:12px;">Failed</span>';
+                }
+                const timeStr = formatRelativeTime(rec.createdAt);
+                const detailId = 'history-detail-' + rec.id;
+                return `
+                    <tr class="history-row" onclick="toggleHistoryDetail('${detailId}')">
+                        <td class="path-cell"><span>${escapeHtml(rec.routePath)}</span></td>
+                        <td>${triggerBadge}</td>
+                        <td>${statusBadge}</td>
+                        <td>${rec.exitCode}</td>
+                        <td>${rec.durationMs}ms</td>
+                        <td>${timeStr}</td>
+                    </tr>
+                    <tr id="${detailId}" class="history-detail">
+                        <td colspan="6">
+                            <label style="display:block;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--color-text-secondary);">Stdout</label>
+                            <div class="result-output stdout" style="max-height:200px;">${escapeHtml(rec.stdout || '(empty)')}</div>
+                            ${rec.stderr ? `<label style="display:block;margin-top:12px;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--color-error);">Stderr</label><div class="result-output stderr" style="max-height:200px;">${escapeHtml(rec.stderr)}</div>` : ''}
+                            ${rec.error ? `<label style="display:block;margin-top:12px;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--color-error);">Error</label><div class="result-output stderr" style="max-height:200px;">${escapeHtml(rec.error)}</div>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleHistoryDetail(detailId) {
+            const el = document.getElementById(detailId);
+            el.classList.toggle('active');
+        }
+
+        async function filterHistory() {
+            const routeId = document.getElementById('historyRouteFilter').value;
+            let url = '/config/history';
+            if (routeId && routeId !== 'all') {
+                url += '?routeId=' + encodeURIComponent(routeId);
+            }
+            try {
+                const res = await fetchWithAuth(url, { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error('Failed to load history');
+                const records = await res.json();
+                renderHistoryTable(records);
+            } catch (err) {
+                if (err.message !== 'cancelled') showToast(err.message, 'error');
+            }
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.remove('active');
+        }
+
+        function retestRoute() {
+            if (lastTestId) testRoute(lastTestId);
+        }
+
+        function updateLineNumbers() {
+            const textarea = document.getElementById('script');
+            const lineNumbers = document.getElementById('lineNumbers');
+            const lines = textarea.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('<br>');
+        }
+
+        const scriptTextarea = document.getElementById('script');
+        scriptTextarea.addEventListener('input', updateLineNumbers);
+        scriptTextarea.addEventListener('scroll', function() {
+            document.getElementById('lineNumbers').scrollTop = scriptTextarea.scrollTop;
+        });
+        scriptTextarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 4;
+                updateLineNumbers();
+            }
+        });
+
+        // On page load, try to access API. If 401, prompt for token.
+        (async function() {
+            let res = await fetch(API_BASE, { headers: getAuthHeaders() });
+            if (res.status === 401) {
+                const token = promptForToken();
+                if (!token) {
+                    document.getElementById('routeTable').innerHTML = '<div class="empty-state"><h3 style="font-size:18px;color:var(--color-error);">Authentication Required</h3><p>Token is required. Refresh the page to try again.</p></div>';
+                    return;
+                }
+            }
+            // Show logout button only when token exists
+            if (localStorage.getItem('web-exec-token')) {
+                document.getElementById('logoutBtn').style.display = '';
+            }
+            loadRoutes();
+        })();
+    </script>
+</body>
+</html>
