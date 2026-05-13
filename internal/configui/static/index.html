@@ -315,6 +315,12 @@
         }
         .btn-test:hover { background: rgba(74,222,128,0.1); }
         .btn-test:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-copy {
+            background: transparent;
+            border: 1px solid var(--color-primary);
+            color: var(--color-primary);
+        }
+        .btn-copy:hover { background: rgba(56,189,248,0.1); }
         .result-output {
             background: var(--color-bg);
             border: 1px solid var(--color-border);
@@ -577,6 +583,7 @@
                     <td class="script-preview" title="${escapeHtml(r.script)}">${escapeHtml(r.script)}</td>
                     <td class="actions">
                         <button class="btn btn-test btn-sm" id="testBtn-${r.id}" onclick="testRoute('${r.id}')">Test</button>
+                        <button class="btn btn-copy btn-sm" onclick="copyCurlCommand('${r.id}')">Copy</button>
                         <button class="btn btn-secondary btn-sm" onclick="openEditModal('${r.id}')">Edit</button>
                         <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${r.id}')">Delete</button>
                     </td>
@@ -692,6 +699,30 @@
             toast.className = `toast toast-${type}`;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function copyCurlCommand(id) {
+            const r = routes.find(x => x.id === id);
+            if (!r) return;
+            const origin = window.location.origin;
+            let cmd = `curl -X POST ${origin}/exec${r.path}`;
+            const token = localStorage.getItem('web-exec-token');
+            if (token) {
+                cmd = `curl -X POST -H "Authorization: Bearer ${token}" ${origin}/exec${r.path}`;
+            }
+            navigator.clipboard.writeText(cmd).then(() => {
+                showToast('Copied to clipboard', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = cmd;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Copied to clipboard', 'success');
+            });
         }
 
         document.addEventListener('keydown', e => {
